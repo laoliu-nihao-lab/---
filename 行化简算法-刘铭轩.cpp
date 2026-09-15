@@ -117,7 +117,7 @@ int initMatrix(vector< vector<double> > &v)
 		}
 	}
 	//ai做了code review才发现忘改了，以后改完要重新检查一遍 
-	for(int i  = 0;i < Pioneer.size();i++)
+	for(int i  = 0;i < Pioneer.size();i++)//
 	{
 		//判断先导元素是否符合阶梯形定义 
 		if(Pioneer[i] >= Pioneer[i + 1])
