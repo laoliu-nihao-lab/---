@@ -66,8 +66,6 @@ void controller(vector< vector<double> > &v)
 
 int initMatrix(vector< vector<double> > &v)
 {
-	//cout << "请逐行输入一个增广矩阵：" << endl;
-	//cout << "（若输入系数矩阵，请在最右侧多加一列全为0的常数项列）" << endl;
 	cout << endl; 
 	cout << "矩阵的行数为：" << endl;
 	int m = 0;
@@ -75,7 +73,7 @@ int initMatrix(vector< vector<double> > &v)
 	cout << "矩阵的列数为：" << endl;
 	int n = 0;
 	cin >> n;
-	cout << "请逐行输入一个增广矩阵：" << endl;
+	cout << "请逐行输入一个增广矩阵或系数矩阵：" << endl;
 	//初始为空时，迭代器不能指向v.begin()，因为为空。
 	//resize()，重新指定大小，可用来初始化 
 	v.resize(m);
