@@ -2,6 +2,15 @@
 using namespace std;
 #include<vector>
 
+
+/* claude code 的优化 
+
+#include <cmath>
+const double EPS = 1e-9;
+bool isZero(double x) { return std::fabs(x) < EPS; }
+
+*/
+
 //按步骤运行
 void controller(vector< vector<double> > &v);
 
@@ -67,9 +76,10 @@ int initMatrix(vector< vector<double> > &v)
 	int n = 0;
 	cin >> n;
 	cout << "请逐行输入一个增广矩阵：" << endl;
+	//初始为空时，迭代器不能指向v.begin()，因为为空。
 	//resize()，重新指定大小，可用来初始化 
 	v.resize(m);
-	//初始为空时，迭代器不能指向v.begin()，因为为空。
+	//比起判断全为零，不如判断不能有非零，有一个就退出 
 	bool cn_echelon = true;
 	bool cn_zero_matrix = true;
 	bool judge_matrix = false;
@@ -131,35 +141,6 @@ int initMatrix(vector< vector<double> > &v)
 	{
 		return 2.0;
 	}
-	/* Claude code 的优化 
-		// 读入时记录每行主元列，零行记为 -1
-		std::vector<int> pioneer(m, -1);
-		for (int i = 0; i < m; ++i) {
-		    for (int j = 0; j < n; ++j) {
-		        double num; std::cin >> num;
-		        v[i].push_back(num);
-		        if (pioneer[i] == -1 && !isZero(num)) pioneer[i] = j;
-		    }
-		}
-		
-		//比起判断全为零，不如判断不能有非零，有一个就退出 
-		bool zeroMatrix = true;
-		for (int p : pioneer) if (p != -1) { zeroMatrix = false; break; }
-		if (zeroMatrix) return 0;
-		
-		bool echelon = true, seenZeroRow = false;
-		int prev = -1;
-		for (int p : pioneer) {
-			//发现零行 
-		    if (p == -1) seenZeroRow = true; // 从此只允许零行
-		    //否则，先导位置 比零小（存在零行时）或比上面的小 ->普通 
-		    //好像只要第二点判断就好了 
-		    else if (seenZeroRow || p <= prev) { echelon = false; break; }
-		    else prev = p;
-		}
-		return echelon ? 1 : 2;
-	*/
-		
 }
 
 void forwardSteps (vector< vector<double> > &v)
@@ -256,37 +237,8 @@ void backwardStep(vector< vector<double> > &v)
 		}	
 	}	
 }
-
-/* claude code 的优化 
-
-#include <cmath>
-const double EPS = 1e-9;
-bool isZero(double x) { return std::fabs(x) < EPS; }
-
-void backwardStep(std::vector<std::vector<double>>& v)
-{
-    for (int i = v.size() - 1; i >= 0; --i)
-    {
-        int pivotCol = -1;
-        for (int j = 0; j < v[0].size(); ++j)
-            if (!isZero(v[i][j])) { pivotCol = j; break; }
-
-        if (pivotCol == -1) continue;          // 真·全零行
-
-        double pivot = v[i][pivotCol];
-        for (int j = pivotCol; j < v[0].size(); ++j)
-            v[i][j] /= pivot;                  // 主元归一化
-
-        for (int k = i - 1; k >= 0; --k)       // 消去上方所有行的主元列
-        {
-            double factor = v[k][pivotCol];
-            for (int c = 0; c < v[0].size(); ++c)
-                v[k][c] -= factor * v[i][c];
-        }
-    }
-}
-*/
-
+ 
+ //consst保证只读，可用范围for 
 void printMatrix(const vector< vector<double> > &v)
 {	
 	cout << "该矩阵对应的简化阶梯矩阵为" << endl;
@@ -300,13 +252,3 @@ void printMatrix(const vector< vector<double> > &v)
 	}
 }
 
-//优化:常数 + 范围for 
-// void printMatrix(const vector< vector<double> > &v)
-//{
-//	cout << "该矩阵对应的简化阶梯矩阵为" << endl;
-//	for (const auto& row : v) 
-//	{
-//        for (double x : row) std::cout << x << '\t';
-//        std::cout << '\n';
-//    }
-//}
