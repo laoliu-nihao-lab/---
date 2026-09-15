@@ -8,7 +8,8 @@ using namespace std;
 #include <cmath>
 const double EPS = 1e-9;
 bool isZero(double x) { return std::fabs(x) < EPS; }
-
+修浮点判零：把 forwardSteps / backwardStep 里所有 != 0 换成 !isZero(...)，
+并在向前消元的内层循环结束后显式置零：
 */
 
 //按步骤运行
@@ -115,7 +116,7 @@ int initMatrix(vector< vector<double> > &v)
 			Pioneer.push_back(n + i);	
 		}
 	}
-	for(int i  = 1;i < Pioneer.size() - 1;i++)
+	for(int i  = 0;i < Pioneer.size();i++)
 	{
 		//判断先导元素是否符合阶梯形定义 
 		if(Pioneer[i] >= Pioneer[i + 1])
@@ -140,6 +141,23 @@ int initMatrix(vector< vector<double> > &v)
 		return 2.0;
 	}
 }
+
+/*claude code优化
+ 
+// 在 initMatrix 里替换原来那段 Pioneer 判断：
+int last_lead = -1;
+bool zero_seen = false;
+for (int i = 0; i < m; i++) {
+    int lead = -1;
+    for (int j = 0; j < n; j++)
+        if (!isZero(v[i][j])) { lead = j; break; }   // 首个非零即先导
+    if (lead == -1) zero_seen = true;                 // 零行
+    else {
+        if (zero_seen || lead <= last_lead) { cn_echelon = false; break; }
+        last_lead = lead;
+    }
+}
+*/
 
 void forwardSteps (vector< vector<double> > &v)
 {
@@ -183,6 +201,7 @@ void forwardSteps (vector< vector<double> > &v)
 		    		(v[i0 + cn_main]).at(h) -= ( savenum / (v[cn_main - 1]).at(j) ) 
 											   * 
 											   ( (v[cn_main - 1]).at(h) );
+					//(v[i0 + cn_main]).at(j) = 0.0;
 		    	}
 			}
 			judge_zero_row = true;
