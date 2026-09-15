@@ -2,9 +2,6 @@
 using namespace std;
 #include<vector>
 
-//储存先导位置 
-vector<int> Pioneer;
-
 //按步骤运行
 void controller(vector< vector<double> > &v);
 
@@ -19,7 +16,6 @@ void backwardStep(vector< vector<double> > &v);
 
 //打印矩阵
 void printMatrix(vector< vector<double> > &v);
-
  
 int main()
 {
@@ -75,11 +71,11 @@ int initMatrix(vector< vector<double> > &v)
 	//初始为空时，迭代器不能指向v.begin()，因为为空。
 	int cn = 0;
 	int cn1 = 0;
-	//行 
+	//第一个数默认为填入个数，第二个数才为要赋的值 
+	vector<double> Pioneer(1,0.0);
 	for(int i = 0;i < m;i++)
 	{
 		bool judge = false;
-		//列 
 		for(int j = 0;j < n;j++)
 		{
 			double num = 0.0;
@@ -88,14 +84,13 @@ int initMatrix(vector< vector<double> > &v)
 			if(num == 0)
 			{
 				cn++;
-				Pioneer.push_back(n + i);
 			}
 			else
 			{
 				//记录先导元素的位置 
 				if(!judge)
 				{
-					Pioneer.push_back(i);
+					Pioneer.push_back(j);
 					judge = true;
 				}
 			}
@@ -274,23 +269,23 @@ void backwardStep(std::vector<std::vector<double>>& v)
 void printMatrix(vector< vector<double> > &v)
 {
 	//零行移到底部 
-//	for(int j = 0;j < v.size();j++)
-//	{
-//		int cn1 = 0;
-//		for(int i = 0;i < (v[0]).size();i++)
-//		{
-//			if((v[j]).at(i) == 0)
-//			{
-//				cn1++;
-//			}
-//		}
-//		if(cn1 == (v[0]).size())
-//			{
-//				vector<double> temp = v[j];
-//	    		v[j] = v[v.size() - 1];
-//	    		v[v.size() - 1] = temp;
-//			}
-//	}	
+	for(int j = 0;j < v.size();j++)
+	{
+		int cn1 = 0;
+		for(int i = 0;i < (v[0]).size();i++)
+		{
+			if((v[j]).at(i) == 0)
+			{
+				cn1++;
+			}
+		}
+		if(cn1 == (v[0]).size())
+			{
+				vector<double> temp = v[j];
+	    		v[j] = v[v.size() - 1];
+	    		v[v.size() - 1] = temp;
+			}
+	}	
 	cout << "该矩阵对应的简化阶梯矩阵为" << endl;
 	for(vector< vector<double> >::iterator it1 = v.begin();it1 != v.end();it1++)
 	{
