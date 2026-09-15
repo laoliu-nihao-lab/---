@@ -2,9 +2,6 @@
 using namespace std;
 #include<vector>
 
-//储存先导位置 
-vector<int> Pioneer;
-
 //按步骤运行
 void controller(vector< vector<double> > &v);
 
@@ -18,7 +15,7 @@ void forwardSteps(vector< vector<double> > &v);
 void backwardStep(vector< vector<double> > &v); 
 
 //打印矩阵
-void printMatrix(vector< vector<double> > &v);
+void printMatrix(const vector< vector<double> > &v);
 
  
 int main()
@@ -31,16 +28,16 @@ int main()
 
 void controller(vector< vector<double> > &v)
 {
-	int cn = initMatrix(v); 
+	int cn_matrix_type = initMatrix(v); 
 	//步骤一:定位主元 
-	 if(cn == 0.0)
+	 if(cn_matrix_type == 0.0)
 	 {
 	 	//步骤五 :打印 
 	 	printMatrix(v);
 	 	cout << "该矩阵为零矩阵" << endl;
 	 	return;
 	 }
-	 else if(cn == 1.0)
+	 else if(cn_matrix_type == 1.0)
 	 {
 	 	//步骤四 
 	 	backwardStep(v); 
@@ -60,66 +57,76 @@ void controller(vector< vector<double> > &v)
 
 int initMatrix(vector< vector<double> > &v)
 {
-	cout << "请逐行输入一个增广矩阵：" << endl;
-	cout << "（若输入系数矩阵，请在最右侧多加一列全为0的常数项列）" << endl;
+	//cout << "请逐行输入一个增广矩阵：" << endl;
+	//cout << "（若输入系数矩阵，请在最右侧多加一列全为0的常数项列）" << endl;
 	cout << endl; 
-	int m = 0;
 	cout << "矩阵的行数为：" << endl;
+	int m = 0;
 	cin >> m;
-	int n = 0;
 	cout << "矩阵的列数为：" << endl;
+	int n = 0;
 	cin >> n;
 	cout << "请逐行输入一个增广矩阵：" << endl;
 	//resize()，重新指定大小，可用来初始化 
 	v.resize(m);
 	//初始为空时，迭代器不能指向v.begin()，因为为空。
-	int cn = 0;
-	int cn1 = 0;
-	//行 
+	bool cn_echelon = true;
+	bool cn_zero_matrix = true;
+	bool judge_matrix = false;
+	//储存先导位置
+	vector<int> Pioneer;
+	//行
 	for(int i = 0;i < m;i++)
 	{
-		bool judge = false;
-		//列 
+		bool cn_zero_row = true;
+		//列
 		for(int j = 0;j < n;j++)
 		{
 			double num = 0.0;
 			cin >> num;
 			v[i].push_back(num);
-			if(num == 0)
-			{
-				cn++;
-				Pioneer.push_back(n + i);
-			}
-			else
+			if(num != 0)
 			{
 				//记录先导元素的位置 
-				if(!judge)
-				{
-					Pioneer.push_back(i);
-					judge = true;
-				}
+					Pioneer.push_back(j);
+					if(cn_zero_row)
+					{
+						cn_zero_row = false;
+					}
+					if(!judge_matrix)
+					{
+						cn_zero_matrix = false;
+						judge_matrix = true;
+					}
 			}
+		}
+		//零行须要全为零，包括常数项列 
+		if(cn_zero_row)
+		{
+			//之后可考虑通过移位区分 
+			Pioneer.push_back(n + i);	
 		}
 	}
 	for(int i  = 1;i < Pioneer.size() - 1;i++)
 	{
 		//判断先导元素是否符合阶梯形定义 
-		if(Pioneer[i] < Pioneer[i + 1])
+		if(Pioneer[i] >= Pioneer[i + 1])
 		{
-			cn1++;
+			cn_echelon = false;
+			break;
 		}
 	}
 	//零矩阵 
-	if(cn == m * n)
+	if(cn_zero_matrix)
 	{
 		return 0.0;
 	}
 	//阶梯形 
-	else if(cn1 == Pioneer.size() - 2)
+	else if(cn_echelon)
 	{
 		return 1.0;
 	}
-	//其他 
+	//一般矩阵 
 	else
 	{
 		return 2.0;
@@ -135,6 +142,7 @@ int initMatrix(vector< vector<double> > &v)
 		    }
 		}
 		
+		//比起判断全为零，不如判断不能有非零，有一个就退出 
 		bool zeroMatrix = true;
 		for (int p : pioneer) if (p != -1) { zeroMatrix = false; break; }
 		if (zeroMatrix) return 0;
@@ -142,7 +150,10 @@ int initMatrix(vector< vector<double> > &v)
 		bool echelon = true, seenZeroRow = false;
 		int prev = -1;
 		for (int p : pioneer) {
-		    if (p == -1) seenZeroRow = true;                 // 从此只允许零行
+			//发现零行 
+		    if (p == -1) seenZeroRow = true; // 从此只允许零行
+		    //否则，先导位置 比零小（存在零行时）或比上面的小 ->普通 
+		    //好像只要第二点判断就好了 
 		    else if (seenZeroRow || p <= prev) { echelon = false; break; }
 		    else prev = p;
 		}
@@ -154,45 +165,48 @@ int initMatrix(vector< vector<double> > &v)
 void forwardSteps (vector< vector<double> > &v)
 {
 	//先遍历列，再遍历行，否则就要遍历整个矩阵来判断哪一行的先导元素在最前面，浪费资源 
-	int cn = 0;
+	int cn_main = 0;
+	//列 
 	for(int j = 0;j < v[0].size();j++)
 	{
-		//
-		bool judge = true; 
-		for(int i = cn;i < v.size();i++)
+		bool judge_zero_row = true; 
+		//行 
+		for(int i = cn_main;i < v.size();i++)
 	    {	
 	    	if((v[i]).at(j) != 0)
 	    	{
 	    		vector<double> temp = v[i];
-	    		v[i] = v[cn];
-	    		v[cn] = temp;
-	    		cn++;
-	    		judge = false;
+	    		v[i] = v[cn_main];
+	    		v[cn_main] = temp;
+	    		cn_main++;
+	    		judge_zero_row = false;
 	    		break;
 			}
 		
 		}
-		if(!judge)
+		if(!judge_zero_row)
 		{
-			for(int i0 = 0;i0 < v.size() - cn;i0++)
+			for(int i0 = 0;i0 < v.size() - cn_main;i0++)
 			{	
-				bool judge = false;
-				//在外面定义，不然if花括号结束后就消除其的内存了 
+				bool judge_savenum = false;
+				//在外面定义，不然if花括号结束后就消除其的内存了 ,且无法保存值。 
 				double savenum = 0.0;
 				for(int h = 0;h < v[0].size();h++)
 		    	{
 					//保存倍加与倍乘的系数，不然只有第一次生效，后面系数皆为零。 
-					if(!judge)
+					if(!judge_savenum)
 					{
-				    savenum = (v[i0 + cn]).at(j);
-					judge = true;
+				    savenum = (v[i0 + cn_main]).at(j);
+					judge_savenum = true;
 					}
 					//'/'是整除，若存在小数，会导致精度丢失问题。
 					//所以得用 vector< vector<double> > &v ，而不是 vector< vector<int> > &v 
-		    		(v[i0 + cn]).at(h) -= ( savenum / (v[cn - 1]).at(j) ) * ((v[cn - 1]).at(h));
+		    		(v[i0 + cn_main]).at(h) -= ( savenum / (v[cn_main - 1]).at(j) ) 
+											   * 
+											   ( (v[cn_main - 1]).at(h) );
 		    	}
 			}
-			judge = true;
+			judge_zero_row = true;
 		}				
 	}	 
 }
@@ -202,39 +216,41 @@ void backwardStep(vector< vector<double> > &v)
 	//行 
 	for(int i = v.size() - 1;i >= 0;i--)
 	{
-		bool judge = false;
+		bool judge_main = false;
 		//先导元素的位置 
-		int cn1 = v[0].size() - 1;
-		double savenum = 1.0;
+		int cn_leading = -1;
+		double savemain = 1.0;
 		//列 
 		for(int j = 0;j < v[0].size();j++)
 		{
+			//主元归一 
 			if((v[i]).at(j) != 0)
 			{			
-				if(!judge)
+				if(!judge_main)
 				{
-					cn1 = j;
-				    savenum = (v[i]).at(j);
-					judge = true;
+					//先导元素的位置
+					cn_leading = j;
+				    savemain = (v[i]).at(j);
+					judge_main = true;
 				}
-				(v[i]).at(j) /= savenum;
+				(v[i]).at(j) /= savemain;
 			}	
 		}
-		if(cn1 != v[0].size() - 1)
+		if(cn_leading != -1)
 		{
 				//行 
 				for(int k = i - 1;k >= 0;k--)
 				{
-					bool judge1 = false;
-					double savenum1 = 0;
-					if(!judge1)
+					bool judge_target = false;
+					double savetarget = 0;
+					if(!judge_target)
 					{
-						savenum1 = (v[k]).at(cn1);
-						judge1 = true;
+						savetarget = (v[k]).at(cn_leading);
+						judge_target = true;
 					}
-					for(int j = cn1;j <= v[0].size() - 1;j++)
+					for(int j = cn_leading;j <= v[0].size() - 1;j++)
 					{
-						(v[k]).at(j) -= ( savenum1 ) * (v[i]).at(j);
+						(v[k]).at(j) -= ( savetarget ) * (v[i]).at(j);
 					} 
 				}
 		}	
@@ -271,32 +287,14 @@ void backwardStep(std::vector<std::vector<double>>& v)
 }
 */
 
-void printMatrix(vector< vector<double> > &v)
-{
-	//零行移到底部 
-//	for(int j = 0;j < v.size();j++)
-//	{
-//		int cn1 = 0;
-//		for(int i = 0;i < (v[0]).size();i++)
-//		{
-//			if((v[j]).at(i) == 0)
-//			{
-//				cn1++;
-//			}
-//		}
-//		if(cn1 == (v[0]).size())
-//			{
-//				vector<double> temp = v[j];
-//	    		v[j] = v[v.size() - 1];
-//	    		v[v.size() - 1] = temp;
-//			}
-//	}	
+void printMatrix(const vector< vector<double> > &v)
+{	
 	cout << "该矩阵对应的简化阶梯矩阵为" << endl;
-	for(vector< vector<double> >::iterator it1 = v.begin();it1 != v.end();it1++)
+	for(int i = 0;i < v.size();i++)
 	{
-		for(vector<double>::iterator it2 = (*it1).begin(); it2 != (*it1).end();it2++)
+		for(int j = 0;j < v[i].size();j++)
 		{
-			cout << (*it2) << '\t';			
+			cout << v[i].at(j) << '\t';			
 		}
 		cout << endl;		
 	}
